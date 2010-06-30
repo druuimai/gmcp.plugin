@@ -23,7 +23,7 @@ function OnPluginTelnetRequest (type, data)
 		ColourNote("blue", "black", "attempting to enable GMCP\n")
 		ColourNote("white", "black", "\n")
 		SendPkt(string.char(IAC, SB, GMCP) .. 
-			[[ Core.Hello { "client" : "Mushclient", "version": "4.51"} ]] ..
+			' Core.Hello { "client" : "Mushclient", "version" : "' .. version() .. '" }' ..
 			string.char(IAC, SE))
 			
 	SendPkt(string.char(IAC, SB, GMCP) .. 
@@ -101,6 +101,6 @@ function UnListenAll(PluginIDx)
 	GMCP_Listeners[PluginIDx] = nil
 end
 
-PPI.Expose("Listen", function (info, callback) Listen(info, callback) end)
-PPI.Expose("Unlisten", function(info) Unlisten(info) end)
-PPI.Expose("UnListenAll", function(PluginIDx) UnListenAll(PluginIDx) end)
+PPI.Expose("Listen", Listen)
+PPI.Expose("UnListen", UnListen)
+PPI.Expose("UnListenAll", UnListenAll)
