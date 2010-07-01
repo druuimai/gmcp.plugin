@@ -5,12 +5,12 @@ require("tprint")
 --variables
 local required_plugin = "0f16b58085aefa674b524ee1"
 local info = "char.vitals"
+dummy_service = nil
 
 -- (ID, on_success, on_failure)
 PPI.OnLoad(required_plugin, 
-			function(gmcp) 
-				gmcp.Listen(GetPluginID() .. "," .. "char.vitals", waha) 
-				gmcp.Listen(GetPluginID() .. "," .. "room.info", waha) 
+			function(ds) 
+				ds.Hello()
 				end, 
 			 -- Optional callback for if it's not available.
 			function(reason) print(reason) end)
@@ -28,6 +28,4 @@ function waha(info, message)
 	end
 end
 
---GMCP = PPI.Load(required_plugin)
---GMCP.hello()
---tprint(GMCP)
+Note(tostring(dummy_service))
