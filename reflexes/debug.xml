@@ -11,17 +11,5 @@
         gmcpdebug = not gmcpdebug
       </send>
     </alias>
-    <alias
-       match="#reinstall"
-       enabled="y"
-       send_to="12"
-       sequence="100"
-      >
-      <send>
-        Note("attempting to reinstall the main script")
-        ReloadPlugin (GetPluginID())
-        Note("done")
-      </send>
-    </alias>
   </aliases>
 </muclient>
