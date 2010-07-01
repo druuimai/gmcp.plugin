@@ -23,7 +23,7 @@ function OnPluginTelnetRequest (type, data)
 		ColourNote("blue", "black", "attempting to enable GMCP\n")
 		ColourNote("white", "black", "\n")
 		SendPkt(string.char(IAC, SB, GMCP) .. 
-			'Core.Hello { "client" : "Mushclient", "version" : "' .. version() .. '" }' ..
+			'Core.Hello { "client" : "Mushclient", "version" : "' .. Version() .. '" }' ..
 			string.char(IAC, SE))
 			
 	SendPkt(string.char(IAC, SB, GMCP) .. 
