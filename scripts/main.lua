@@ -11,7 +11,11 @@ local CLIENT_ID = "MUSHclient " .. Version ()
 local IAC, SB, SE, DO = 0xFF, 0xFA, 0xF0, 0xFD
 local GMCP = 201
 local ATTEMPTED = false
--------------
+local GMCP_options = { "Char 1" , 
+						"Char.Skills 1", 
+						"Room 1", "Char.Items 1", 
+						"Comm.Channel 1", 
+						"IRE.Rift 1" }
 
 function OnPluginTelnetRequest (type, data)
 	--Note("TYPE: " .. tostring(type) .. "\nDATA:" .. tostring(data))
@@ -27,7 +31,7 @@ function OnPluginTelnetRequest (type, data)
 			string.char(IAC, SE))
 			
 	SendPkt(string.char(IAC, SB, GMCP) .. 
-			'Core.Supports.Set [ "Char 1", "Char.Skills 1", "Room 1", "Char.Items 1", "Comm.Channel 1", "IRE.Rift 1" ]' .. 
+			'Core.Supports.Set [ "' .. table.concat(GMCP_options, '", "') .. '" ]' .. 
 			string.char(IAC, SE))
 	ATTEMPTED = true
 	end
