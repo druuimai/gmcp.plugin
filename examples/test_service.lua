@@ -1,5 +1,7 @@
-PPI = require("libraries.ppi")
-tprint = require("libraries.tprint")
+--0f16b58085aefa674b524ee1
+
+PPI = require("ppi")
+require("tprint")
 
 GMCP_listeners = {}
 
@@ -35,6 +37,10 @@ function UnListenAll(PluginIDx)
 	GMCP_Listeners[PluginIDx] = nil
 end
 
-PPI.Expose("Listen", function (info, callback) Listen(info, callback) end)
-PPI.Expose("Unlisten", function(info) Unlisten(info) end)
-PPI.Expose("UnListenAll", function(PluginIDx) UnListenAll(PluginIDx) end)
+function Hello()
+	print("Hello user, what you want from me?")
+end
+PPI.Expose("Listen", Listen)
+PPI.Expose("UnListen", UnListen)
+PPI.Expose("UnListenAll", UnListenAll)
+PPI.Expose("Hello", Hello)
