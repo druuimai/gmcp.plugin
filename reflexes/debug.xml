@@ -11,4 +11,5 @@
         gmcpdebug = not gmcpdebug
       </send>
     </alias>
+  </aliases>
 </muclient>
