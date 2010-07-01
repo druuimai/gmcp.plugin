@@ -41,8 +41,13 @@ end
 
 
 function SendGMCP(message, content)
-  Note("Sending: " .. message .. " " .. json.encode(content))
-  SendPkt(codes.IAC_SB_GMCP .. message .. " " .. json.encode(content) .. codes.IAC_SE)
+  local content = json.encode(content)
+  if content == nil then
+    return nil, "Invalid input."
+  else
+    SendPkt(codes.IAC_SB_GMCP .. message .. " " .. content .. codes.IAC_SE)
+    return true
+  end
 end
 
 function OnPluginTelnetRequest (opt, data)
@@ -102,10 +107,10 @@ function OnPluginTelnetSubnegotiation (opt, data)
   if listeners then
     for curr, prev in links(listeners) do
       -- If it blows up, remove this callback from the list.
-      if not pcall(curr.callback, message, content) then
+      if not pcall(curr.callback, msg, content) then
         prev.next = curr.next
         curr.next.prev = prev
-        callbacks[curr.callback] = nil
+        listeners[curr.callback] = nil
       end
     end
   end
@@ -160,5 +165,7 @@ function Unlisten(message, callback)
   end
 end
 
+
 PPI.Expose("Listen", Listen)
 PPI.Expose("Unlisten", Unlisten)
+PPI.Expose("Send", SendGMCP)
