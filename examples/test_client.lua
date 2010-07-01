@@ -1,6 +1,8 @@
 PPI = require("ppi")
 tprint = require("tprint")
 
+GMCP = nil -- someplace to store it globally
+
 function waha(info, message)
   ColourNote("blue", "black", "INFO:" .. info .. "\n")
   if type(message) == "table" then
@@ -16,6 +18,7 @@ PPI.OnLoad("29a4c0721bef6ae11c3e9a82",
   function(gmcp)
     gmcp.Listen("Char.Vitals", waha)
     gmcp.Listen("Room.Info", waha)
+    GMCP = gmcp -- store it globally
   end,
   -- Optional callback for if it's not available.
   function(reason)
