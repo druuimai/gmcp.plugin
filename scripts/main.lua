@@ -41,11 +41,11 @@ end
 
 
 function SendGMCP(message, content)
-  local content = json.encode(content)
+  local content = json.encode({content})
   if content == nil then
     return nil, "Invalid input."
   else
-    SendPkt(codes.IAC_SB_GMCP .. message .. " " .. content .. codes.IAC_SE)
+    SendPkt(codes.IAC_SB_GMCP .. message .. " " .. content[1] .. codes.IAC_SE)
     return true
   end
 end
@@ -80,16 +80,14 @@ function OnPluginTelnetSubnegotiation (opt, data)
     
     if content:len() == 0 then
       content = nil
-    elseif content:sub(1,1) ~= "[" and content:sub(1,1) ~= "{" then
     -- Not every JSON parser allows any top-level value to be valid.
     -- Ensuring that a non-object non-array value is at least within
     -- an array makes this code parser-agnostic.
+    else
       content, err = json.decode("[" .. content .. "]")
       if content ~= nil then
         content = content[1]
       end
-    else
-      content = json.decode(content)
     end
   end
   
