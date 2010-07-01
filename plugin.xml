@@ -12,43 +12,13 @@
    requires="4.50"
    version="0.5"
    >
-<description trim="y">
-<![CDATA[
 
-]]>
-</description>
+<description trim="y"><![CDATA[
+]]></description>
 
 </plugin>
+
 <include name="$PLUGINDIR\libraries\plugger.xml" />
-<aliases>
-  <alias
-	   match="#gmcpdebug"
-	   enabled="y"
-	   send_to="12"
-	   sequence="100"
-	  >
-		<send>
-			if not gmcpdebug then
-				gmcpdebug = true
-			else
-				gmcpdebug = false
-			end
-		</send>
-	</alias>
-	 <alias
-	   match="#reinstall"
-	   enabled="y"
-	   send_to="12"
-	   sequence="100"
-	  >
-		<send>
-			ReInstall()
-		</send>
-	</alias>
-</aliases>
-
-
-<!--  Script  -->
-
+<include name="$PLUGINDIR\reflexes\debug.xml" />
 
 </muclient>

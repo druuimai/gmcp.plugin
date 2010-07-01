@@ -1,30 +1,28 @@
-PPI = require("libraries.ppi")
-tprint = require("libraries.tprint")
+PPI = require("ppi")
+tprint = require("tprint")
 
-function OnPluginEnable()
-	print("enabled")
+function waha(info, message)
+  ColourNote("blue", "black", "INFO:" .. info .. "\n")
+  if type(message) == "table" then
+    tprint(message)
+  else
+    Note(message)
+  end
 end
 
-local required_plugin = "29a4c0721bef6ae11c3e9a82"
-local info = "char.vitals"
 -- (ID, on_success, on_failure)
-PPI.OnLoad(required_plugin, 
-			function(gmcp) 
-				gmcp.Listen(GetPluginID() .. "," .. "char.vitals", waha) 
-				gmcp.Listen(GetPluginID() .. "," .. "room.info", waha) 
-				end, 
-			 -- Optional callback for if it's not available.
-			function(reason) print(reason) end)
+PPI.OnLoad("29a4c0721bef6ae11c3e9a82",
+  -- Callback for when it's been (re)loaded.
+  function(gmcp)
+    gmcp.Listen("Char.Vitals", waha)
+    gmcp.Listen("Room.Info", waha)
+  end,
+  -- Optional callback for if it's not available.
+  function(reason)
+    Note("Plugin interface unavailable: " .. reason)
+  end
+)
 
 function OnPluginListChanged()
   PPI.Refresh()
-end
-
-function waha(info, message)
-	ColourNote("blue", "black", "INFO:" .. info .. "\n")
-	if type(message) == "string" then
-		Note(message)
-	else
-		tprint(message)
-	end
 end

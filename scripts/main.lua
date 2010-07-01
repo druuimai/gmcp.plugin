@@ -1,5 +1,5 @@
 ---- initialize the libraries
-require("json")
+require("libraries.json")
 require("tprint")
 PPI = require ("ppi")
 
@@ -7,104 +7,145 @@ PPI = require ("ppi")
 GMCP_listeners = {}
 
 -- GMCP and Telnet Request/Subnegotiation info
-local CLIENT_ID = "MUSHclient " .. Version ()
-local IAC, SB, SE, DO = 0xFF, 0xFA, 0xF0, 0xFD
-local GMCP = 201
-local ATTEMPTED = false
-local GMCP_options = { "Char 1" , 
-						"Char.Skills 1", 
-						"Room 1", "Char.Items 1", 
-						"Comm.Channel 1", 
-						"IRE.Rift 1" }
+local CLIENT_ID = {client="MUSHclient", version=Version()}
+local codes = {
+  IAC_DO_GMCP = "\255\253\201", -- enables GMCP communication
+  IAC_SB_GMCP = "\255\250\201", -- begins a GMCP packet
+  IAC_SE      = "\255\240",     -- ends a GMCP packet
+  GMCP        = 201,            -- GTCP protocol number
+}
 
-function OnPluginTelnetRequest (type, data)
-	--Note("TYPE: " .. tostring(type) .. "\nDATA:" .. tostring(data))
-	if type== GMCP and data == "WILL" and ATTEMPTED == false then
-		SendPkt(string.char(IAC, DO, GMCP))
-		return
-	end
-	if type == GMCP and data == "SENT_DO" and ATTEMPTED == false then
-		ColourNote("blue", "black", "attempting to enable GMCP\n")
-		ColourNote("white", "black", "\n")
-		SendPkt(string.char(IAC, SB, GMCP) .. 
-			'Core.Hello { "client" : "Mushclient", "version" : "' .. Version() .. '" }' ..
-			string.char(IAC, SE))
-			
-	SendPkt(string.char(IAC, SB, GMCP) .. 
-			'Core.Supports.Set [ "' .. table.concat(GMCP_options, '", "') .. '" ]' .. 
-			string.char(IAC, SE))
-	ATTEMPTED = true
-	end
-			
-end
+-- GMCP modules supported by this plugin
+local GMCP_options = {
+  "Char 1",
+  "Char.Skills 1",
+  "Room 1",
+  "Char.Items 1",
+  "Comm.Channel 1",
+  "IRE.Rift 1"
+}
+-------------
 
-function OnPluginTelnetSubnegotiation (subType, option)
-	if not subType == 201 then
-		return
-	end
-	local decodedmessage, t
-	t = utils.split (option, " ", 1)
-	decodedmessage = json.decode(tostring(t[2]), initialObject)
-	
-	--if the enduser want to view what gmcp says, he/she use #gmcpdebug to enable this. --
-	if gmcpdebug then
-		ColourNote("blue", "black", t[1])
-		if type(decodedmessage) == "table" then
-			tprint(decodedmessage)
-			ColourNote("white", "black", "\n")
-		else
-			print(decodedmessage)
-			ColourNote("silver", "black", "\n")
-		end
-	end -- gmcpdebug
-	OnGMCPcall(t[1], decodedmessage)
-end
-
-function OnPluginTelnetOption (data)
-  Note ("Received option string ", tostring(data))
-end -- function OnPluginTelnetOption
-
-function OnPluginDisconnect()
-	ATTEMPTED = false
-end
-
-function OnGMCPcall(stat, GMCPmsg)
-	local stat = string.lower(stat)
-	local GMCPmsg = GMCPmsg
-	--tprint(GMCP_listeners)
-	for w, t in pairs(GMCP_listeners) do
-		for k, f in pairs(t) do
-			if stat == string.lower(k) then
-				f(k, GMCPmsg)
-			end
-		end
-	end
+-- Linked list iterator
+do
+  local function iter(list, curr)
+    return (curr and curr.next or nil), curr
+  end
+  
+  function links(list)
+    return iter, list, list[0]
+  end
 end
 
 
-function Listen(info, callback)
-	local info = utils.split (info, ",", 1)
-	info["id"] = info[1]
-	info["stat"] = info[2]
-	if GMCP_listeners[info.id] == nil then
-		GMCP_listeners[info.id] = {}
-	end
-	GMCP_listeners[info.id][info.stat] = callback
+function SendGMCP(message, content)
+  Note("Sending: " .. message .. " " .. json.encode(content))
+  SendPkt(codes.IAC_SB_GMCP .. message .. " " .. json.encode(content) .. codes.IAC_SE)
 end
 
+function OnPluginTelnetRequest (opt, data)
+  if opt ~= codes.GMCP then
+    return
+  end
+  
+  if data == "WILL" then
+    return true
+  elseif data == "SENT_DO" then
+    ColourNote("blue", "black", "attempting to enable GMCP\n")
+    ColourNote("white", "black", "\n")
+    
+    SendGMCP("Core.Hello", CLIENT_ID)
+    SendGMCP("Core.Supports.Set", GMCP_options)
+    
+    return true
+  end
+end
 
+function OnPluginTelnetSubnegotiation (opt, data)
+  if opt ~= codes.GMCP then
+    return
+  end
+  
+  local msg, content
+  do
+    local t = utils.split(data, " ", 1)
+    msg, content = t[1], json.decode(t[2])
+  end
+  
+  --if the enduser want to view what gmcp says, he/she use #gmcpdebug to enable this. --
+  if gmcpdebug then
+    ColourNote("blue", "black", msg)
+    Note(type(content))
+    if type(content) == "table" then
+      tprint(content)
+      ColourNote("white", "black", "\n")
+    else
+      print(content)
+      ColourNote("silver", "black", "\n")
+    end
+  end -- gmcpdebug
+  
+  local listeners = GMCP_listeners[msg]
+  if listeners then
+    for curr, prev in links(listeners) do
+      -- If it blows up, remove this callback from the list.
+      if not pcall(curr.callback, message, content) then
+        prev.next = curr.next
+        curr.next.prev = prev
+        callbacks[curr.callback] = nil
+      end
+    end
+  end
+end
+
+function Listen(message, callback)
+  if type(message) ~= "string" or type(callback) ~= "function" then
+    return nil, "Invalid argument(s)"
+  end
+  
+  local listeners = GMCP_listeners[message]
+  if listeners == nil then
+    listeners = {[0] = {}} -- linked list
+    GMCP_listeners[message] = listeners
+  elseif listeners[callback] then
+    return -- already listening
+  end
+  
+  local previous = listeners[#listeners]
+  local node = {
+    callback = callback,
+    next = nil,
+    previous = previous,
+  }
+  
+  table.insert(listeners, node)
+  previous.next = node
+  listeners[callback] = node
+end
 		
-function UnListen(info)
-	local info = utils.split (info, ",", 1)
-	info["id"] = info[1]
-	info["stat"] = info[2]
-	GMCP_listeners[info.id][info.stat] = nil
-end
-
-function UnListenAll(PluginIDx)
-	GMCP_Listeners[PluginIDx] = nil
+function Unlisten(message, callback)
+  if type(message) ~= "string" or type(callback) ~= "function" then
+    return nil, "Invalid argument(s)"
+  end
+  
+  local listeners = listeners[message]
+  if listeners == nil then
+    return -- not listening
+  end
+  
+  local node = listeners[message]
+  if node == nil then
+    return -- not listening
+  end
+  
+  listeners[message] = nil
+  if node.next then
+    node.next.previous = node.previous
+  end
+  if node.previous then
+    node.previous.next = node.next
+  end
 end
 
 PPI.Expose("Listen", Listen)
-PPI.Expose("UnListen", UnListen)
-PPI.Expose("UnListenAll", UnListenAll)
+PPI.Expose("Unlisten", Unlisten)
