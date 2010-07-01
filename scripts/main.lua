@@ -1,5 +1,5 @@
 ---- initialize the libraries
-require("libraries.json")
+require("json")
 require("tprint")
 PPI = require ("ppi")
 
@@ -19,10 +19,12 @@ local codes = {
 local GMCP_options = {
   "Char 1",
   "Char.Skills 1",
-  "Room 1",
   "Char.Items 1",
   "Comm.Channel 1",
-  "IRE.Rift 1"
+  "Room 1",
+  "Redirect 1",
+  "IRE.Rift 1",
+  "IRE.Composer 1",
 }
 -------------
 
@@ -69,19 +71,30 @@ function OnPluginTelnetSubnegotiation (opt, data)
   local msg, content
   do
     local t = utils.split(data, " ", 1)
-    msg, content = t[1], json.decode(t[2])
+    msg, content = t[1], t[2]
+    
+    if content:len() == 0 then
+      content = nil
+    elseif content:sub(1,1) ~= "[" and content:sub(1,1) ~= "{" then
+    -- Not every JSON parser allows any top-level value to be valid.
+    -- Ensuring that a non-object non-array value is at least within
+    -- an array makes this code parser-agnostic.
+      content, err = json.decode("[" .. content .. "]")
+      if content ~= nil then
+        content = content[1]
+      end
+    else
+      content = json.decode(content)
+    end
   end
   
   --if the enduser want to view what gmcp says, he/she use #gmcpdebug to enable this. --
   if gmcpdebug then
     ColourNote("blue", "black", msg)
-    Note(type(content))
     if type(content) == "table" then
       tprint(content)
-      ColourNote("white", "black", "\n")
     else
-      print(content)
-      ColourNote("silver", "black", "\n")
+      Note(content)
     end
   end -- gmcpdebug
   
