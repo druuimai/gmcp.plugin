@@ -1,4 +1,4 @@
----- initialize the libraries
+--- initialize the libraries
 require("json")
 require("tprint")
 PPI = require ("ppi")
@@ -41,11 +41,11 @@ end
 
 
 function SendGMCP(message, content)
-  local content = json.encode({content})
+  local content = json.encode(content)
   if content == nil then
     return nil, "Invalid input."
   else
-    SendPkt(codes.IAC_SB_GMCP .. message .. " " .. content[1] .. codes.IAC_SE)
+    SendPkt(codes.IAC_SB_GMCP .. message .. " " .. content .. codes.IAC_SE)
     return true
   end
 end
@@ -61,8 +61,8 @@ function OnPluginTelnetRequest (opt, data)
     ColourNote("blue", "black", "attempting to enable GMCP\n")
     ColourNote("white", "black", "\n")
     
-    SendGMCP("Core.Hello", CLIENT_ID)
-    SendGMCP("Core.Supports.Set", GMCP_options)
+    SendGMCP("Core.Hello ", CLIENT_ID)
+    SendGMCP("Core.Supports.Set ", GMCP_options)
     
     return true
   end

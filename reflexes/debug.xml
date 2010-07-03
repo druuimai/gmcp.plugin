@@ -9,6 +9,7 @@
       >
       <send>
         gmcpdebug = not gmcpdebug
+        Note("GMCPDEBUG IS " .. tostring(gmcpdebug))
       </send>
     </alias>
   </aliases>
