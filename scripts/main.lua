@@ -41,13 +41,21 @@ end
 
 
 function SendGMCP(message, content)
-  local content = json.encode(content)
-  if content == nil then
-    return nil, "Invalid input."
-  else
-    SendPkt(codes.IAC_SB_GMCP .. message .. " " .. content .. codes.IAC_SE)
-    return true
+  if type(message) ~= "string" then
+    return nil, "Message name must be a string."
   end
+  
+  local data = message
+  if content ~= nil then
+    content = json.encode({content})
+    if content == nil then
+      return nil, "Invalid input."
+    end
+    data = data .. " " .. content:sub(2, #content-1)
+  end
+  
+  SendPkt(codes.IAC_SB_GMCP .. data .. codes.IAC_SE)
+  return true
 end
 
 function OnPluginTelnetRequest (opt, data)
